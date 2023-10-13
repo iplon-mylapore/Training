@@ -1,0 +1,262 @@
+[
+    {
+        "id": "3cc11d24.ff01a2",
+        "type": "comment",
+        "z": "f6f2187d.f17ca8",
+        "name": "WARNING: please check you have started this container with a volume that is mounted to /data\\n otherwise any flow changes are lost when you redeploy or upgrade the container\\n (e.g. upgrade to a more recent node-red docker image).\\n  If you are using named volumes you can ignore this warning.\\n Double click or see info side panel to learn how to start Node-RED in Docker to save your work",
+        "info": "\nTo start docker with a bind mount volume (-v option), for example:\n\n```\ndocker run -it -p 1880:1880 -v /home/user/node_red_data:/data --name mynodered nodered/node-red\n```\n\nwhere `/home/user/node_red_data` is a directory on your host machine where you want to store your flows.\n\nIf you do not do this then you can experiment and redploy flows, but if you restart or upgrade the container the flows will be disconnected and lost. \n\nThey will still exist in a hidden data volume, which can be recovered using standard docker techniques, but that is much more complex than just starting with a named volume as described above.",
+        "x": 350,
+        "y": 80,
+        "wires": []
+    },
+    {
+        "id": "a2c819981b25e950",
+        "type": "inject",
+        "z": "f6f2187d.f17ca8",
+        "name": "",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            }
+        ],
+        "repeat": "60",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "",
+        "payloadType": "date",
+        "x": 150,
+        "y": 280,
+        "wires": [
+            [
+                "e9bd512a2ae78373",
+                "765a40e8aa2a42a9"
+            ]
+        ]
+    },
+    {
+        "id": "e9bd512a2ae78373",
+        "type": "function",
+        "z": "f6f2187d.f17ca8",
+        "name": "function 1",
+        "func": "// Generate a random number between 0 and 1\nconst randomNum = Math.random();\nconsole.log(randomNum);\n\n// Generate a random integer between min (inclusive) and max (inclusive)\nconst getRandomInt = (min, max) => {\n  return Math.floor(Math.random() * (max - min + 1)) + min;\n};\n\nconst min = 1;\nconst max = 100;\nconst randomInt = getRandomInt(min, max);\n\n\nvar obj = {};\n\nobj.payload =\n\n  \n{\nTime: msg.payload,\nvalue: randomInt,\nqu: 0,\ntext: \"opcua\",\nb: \"B01\",\nbd: \"Block_1\",\nd: \"INV1\",\ndd: \"INV1\",\ndt: \"INV\",\nf: \"PDC\",\nfd: \"DC_POWER\",\nh: \"server_7712\",\niid: 7712,\nm: 1,\np: \"Technic_solar\",\nu: \"kW\",\nmn: \"v\"\n}\nnode.send(obj);\n\nreturn null;\n",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 300,
+        "y": 280,
+        "wires": [
+            [
+                "2f2e396ebd444d07",
+                "35b9acf4813eb844",
+                "34eb813e0bf8a679"
+            ]
+        ]
+    },
+    {
+        "id": "2f2e396ebd444d07",
+        "type": "debug",
+        "z": "f6f2187d.f17ca8",
+        "name": "debug 1",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "false",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 500,
+        "y": 280,
+        "wires": []
+    },
+    {
+        "id": "35b9acf4813eb844",
+        "type": "mqtt out",
+        "z": "f6f2187d.f17ca8",
+        "name": "",
+        "topic": "mqtt_test",
+        "qos": "2",
+        "retain": "",
+        "respTopic": "",
+        "contentType": "",
+        "userProps": "",
+        "correl": "",
+        "expiry": "",
+        "broker": "1e6edb514ca7ee44",
+        "x": 520,
+        "y": 400,
+        "wires": []
+    },
+    {
+        "id": "55abb4e226603f04",
+        "type": "influxdb batch",
+        "z": "f6f2187d.f17ca8",
+        "influxdb": "53eae8146b7c0f14",
+        "precision": "",
+        "retentionPolicy": "",
+        "name": "",
+        "database": "database",
+        "precisionV18FluxV20": "ms",
+        "retentionPolicyV18Flux": "",
+        "org": "iplon",
+        "bucket": "direct_method",
+        "x": 560,
+        "y": 520,
+        "wires": []
+    },
+    {
+        "id": "34eb813e0bf8a679",
+        "type": "function",
+        "z": "f6f2187d.f17ca8",
+        "name": "line protocol",
+        "func": "\n\n    var time = msg.payload.Time\n    var obj = {};\n    obj.payload =\n\n        [\n            {\n                measurement: \"v\",\n\n                fields: {\n\n                    value: msg.payload.value,\n                    qu: msg.payload.qu,\n                    text: msg.payload.text\n                },\n                tags: {\n                    p: msg.payload.p,\n                    b: msg.payload.b,\n                    bd: msg.payload.bd,\n                    d: msg.payload.d,\n                    dd: msg.payload.dd,\n                    dt: msg.payload.dt,\n                    f: msg.payload.f,\n                    fd: msg.payload.fd,\n                    h: msg.payload.h,\n                    id: msg.payload.iid,\n                    m: msg.payload.m,\n                    u: msg.payload.u\n\n                },\n\n                timestamp: time\n            }\n        ];\n\n    //plantObj.push(obj)\n    node.send(obj);\n\n//msg.payload = plantObj\n\n//return msg;\nreturn null;\n\n",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 350,
+        "y": 520,
+        "wires": [
+            [
+                "55abb4e226603f04"
+            ]
+        ]
+    },
+    {
+        "id": "976a2534177eac71",
+        "type": "comment",
+        "z": "f6f2187d.f17ca8",
+        "name": "direct influx method",
+        "info": "",
+        "x": 430,
+        "y": 460,
+        "wires": []
+    },
+    {
+        "id": "226d30c1243d9180",
+        "type": "comment",
+        "z": "f6f2187d.f17ca8",
+        "name": "mqtt influx method",
+        "info": "",
+        "x": 550,
+        "y": 360,
+        "wires": []
+    },
+    {
+        "id": "1eb4715ce6a6d4e2",
+        "type": "mqtt out",
+        "z": "f6f2187d.f17ca8",
+        "name": "",
+        "topic": "telegraf_test",
+        "qos": "2",
+        "retain": "",
+        "respTopic": "",
+        "contentType": "",
+        "userProps": "",
+        "correl": "",
+        "expiry": "",
+        "broker": "1e6edb514ca7ee44",
+        "x": 470,
+        "y": 620,
+        "wires": []
+    },
+    {
+        "id": "765a40e8aa2a42a9",
+        "type": "function",
+        "z": "f6f2187d.f17ca8",
+        "name": "function 10",
+        "func": "// Generate a random number between 0 and 1\nconst randomNum = Math.random();\nconsole.log(randomNum);\n\n// Generate a random integer between min (inclusive) and max (inclusive)\nconst getRandomInt = (min, max) => {\n  return Math.floor(Math.random() * (max - min + 1)) + min;\n};\n\nconst min = 1;\nconst max = 100;\nconst randomInt = getRandomInt(min, max);\n\nconst date = new Date(msg.payload);\n\nconst year = date.getFullYear();\nconst month = String(date.getMonth() + 1).padStart(2, '0');\nconst day = String(date.getDate()).padStart(2, '0');\nconst hours = String(date.getHours()).padStart(2, '0');\nconst minutes = String(date.getMinutes()).padStart(2, '0');\nconst seconds = String(date.getSeconds()).padStart(2, '0');\n\nconst formattedDate = `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;\n\nvar obj = {};\n\nobj.payload =\n\n  \n{\nTime:formattedDate ,\nvalue: randomInt,\nqu: 0,\ntext: \"opcua\",\nb: \"B01\",\nbd: \"Block_1\",\nd: \"INV1\",\ndd: \"INV1\",\ndt: \"INV\",\nf: \"PDC\",\nfd: \"DC_POWER\",\nh: \"server_7712\",\niid: 7712,\nm: 1,\np: \"Technic_solar\",\nu: \"kW\",\nmn: \"v\"\n}\nnode.send(obj);\n\nreturn null;\n",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 290,
+        "y": 620,
+        "wires": [
+            [
+                "1eb4715ce6a6d4e2"
+            ]
+        ]
+    },
+    {
+        "id": "a25674caf31f0c4f",
+        "type": "comment",
+        "z": "f6f2187d.f17ca8",
+        "name": "telegraf influx method",
+        "info": "",
+        "x": 340,
+        "y": 580,
+        "wires": []
+    },
+    {
+        "id": "1e6edb514ca7ee44",
+        "type": "mqtt-broker",
+        "name": "",
+        "broker": "172.17.0.2",
+        "port": "1883",
+        "clientid": "",
+        "autoConnect": true,
+        "usetls": false,
+        "protocolVersion": "4",
+        "keepalive": "60",
+        "cleansession": true,
+        "autoUnsubscribe": true,
+        "birthTopic": "",
+        "birthQos": "0",
+        "birthRetain": "false",
+        "birthPayload": "",
+        "birthMsg": {},
+        "closeTopic": "",
+        "closeQos": "0",
+        "closeRetain": "false",
+        "closePayload": "",
+        "closeMsg": {},
+        "willTopic": "",
+        "willQos": "0",
+        "willRetain": "false",
+        "willPayload": "",
+        "willMsg": {},
+        "userProps": "",
+        "sessionExpiry": ""
+    },
+    {
+        "id": "53eae8146b7c0f14",
+        "type": "influxdb",
+        "hostname": "iplon-pvindia.com",
+        "port": "63800",
+        "protocol": "http",
+        "database": "",
+        "name": "",
+        "usetls": false,
+        "tls": "c563e3c6072c32be",
+        "influxdbVersion": "2.0",
+        "url": "http://172.17.0.4:8086/",
+        "rejectUnauthorized": false
+    },
+    {
+        "id": "c563e3c6072c32be",
+        "type": "tls-config",
+        "name": "",
+        "cert": "",
+        "key": "",
+        "ca": "",
+        "certname": "",
+        "keyname": "",
+        "caname": "",
+        "servername": "",
+        "verifyservercert": false,
+        "alpnprotocol": ""
+    }
+]
